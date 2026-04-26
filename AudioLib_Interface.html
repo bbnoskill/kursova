@@ -1,0 +1,1670 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AudioLib — Музична аудіотека</title>
+<meta name="description" content="Інформаційна система управління музичною аудіотекою AudioLib">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+
+  *{margin:0;padding:0;box-sizing:border-box;}
+  :root{
+    --bg:#0d0d14;
+    --surface:#161622;
+    --surface2:#1e1e2e;
+    --border:#2a2a3d;
+    --accent:#7c3aed;
+    --accent2:#a855f7;
+    --green:#10b981;
+    --red:#ef4444;
+    --yellow:#f59e0b;
+    --text:#e2e8f0;
+    --muted:#64748b;
+    --sidebar:220px;
+  }
+  body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);display:flex;height:100vh;overflow:hidden;font-size:13px;}
+
+  /* SIDEBAR */
+  .sidebar{width:var(--sidebar);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;}
+  .logo{padding:20px 16px 16px;border-bottom:1px solid var(--border);}
+  .logo-title{font-family:'Space Mono',monospace;font-size:16px;font-weight:700;color:#a78bfa;letter-spacing:-0.5px;}
+  .logo-sub{font-size:10px;color:var(--muted);margin-top:2px;}
+  .nav{flex:1;padding:12px 8px;overflow-y:auto;}
+  .nav-section{font-size:9px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1px;padding:8px 8px 4px;}
+  .nav-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;cursor:pointer;color:var(--muted);transition:all .15s;font-size:12px;font-weight:500;margin-bottom:1px;}
+  .nav-item:hover{background:var(--surface2);color:var(--text);}
+  .nav-item.active{background:rgba(124,58,237,.15);color:#a78bfa;}
+  .nav-item .icon{width:16px;text-align:center;font-size:14px;}
+  .nav-badge{margin-left:auto;background:var(--accent);color:#fff;font-size:9px;padding:1px 5px;border-radius:8px;font-weight:700;}
+  .user-area{padding:12px;border-top:1px solid var(--border);}
+  .user-card{display:flex;align-items:center;gap:10px;padding:8px;border-radius:8px;background:var(--surface2);}
+  .avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;}
+  .user-info .name{font-size:11px;font-weight:600;}
+  .user-info .role{font-size:10px;color:var(--muted);}
+  .role-switcher{display:flex;gap:4px;padding:8px;flex-wrap:wrap;}
+  .role-btn{font-size:9px;padding:3px 8px;border:1px solid var(--border);border-radius:12px;cursor:pointer;background:transparent;color:var(--muted);font-family:inherit;transition:all .15s;}
+  .role-btn.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  /* MAIN */
+  .main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+  .topbar{height:52px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0;}
+  .topbar-title{font-weight:600;font-size:14px;}
+  .topbar-path{color:var(--muted);font-size:12px;}
+  .search-bar{margin-left:auto;display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:6px 12px;width:240px;}
+  .search-bar input{background:transparent;border:none;outline:none;color:var(--text);font-size:12px;font-family:inherit;width:100%;}
+  .search-bar input::placeholder{color:var(--muted);}
+  .content{flex:1;overflow-y:auto;padding:20px;}
+  .page{display:none;}
+  .page.active{display:block;}
+
+  /* KPI */
+  .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+  .kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;}
+  .kpi-label{font-size:11px;color:var(--muted);margin-bottom:8px;font-weight:500;}
+  .kpi-value{font-size:26px;font-weight:700;font-family:'Space Mono',monospace;line-height:1;}
+  .kpi-sub{font-size:10px;color:var(--muted);margin-top:4px;}
+  .kpi-card.accent{border-color:rgba(124,58,237,.4);background:rgba(124,58,237,.08);}
+  .kpi-card.green{border-color:rgba(16,185,129,.4);background:rgba(16,185,129,.08);}
+  .kpi-card.yellow{border-color:rgba(245,158,11,.4);background:rgba(245,158,11,.08);}
+
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;}
+  .three-col{display:grid;grid-template-columns:2fr 1fr;gap:12px;margin-bottom:20px;}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;}
+  .card-title{font-size:12px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:6px;}
+  .card-title .icon{color:var(--accent2);}
+
+  /* TABLE */
+  .tbl{width:100%;border-collapse:collapse;}
+  .tbl th{text-align:left;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;padding:8px 10px;border-bottom:1px solid var(--border);}
+  .tbl td{padding:10px;border-bottom:1px solid rgba(42,42,61,.5);font-size:12px;vertical-align:middle;}
+  .tbl tr:hover td{background:var(--surface2);}
+  .tbl tr:last-child td{border-bottom:none;}
+
+  /* BADGES */
+  .badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:600;}
+  .badge.free{background:rgba(100,116,139,.15);color:#94a3b8;}
+  .badge.premium{background:rgba(168,85,247,.15);color:#c084fc;}
+  .badge.active{background:rgba(16,185,129,.15);color:#34d399;}
+  .badge.inactive{background:rgba(239,68,68,.15);color:#f87171;}
+  .badge.song{background:rgba(99,102,241,.15);color:#a5b4fc;}
+  .badge.podcast{background:rgba(20,184,166,.15);color:#5eead4;}
+  .badge.audiobook{background:rgba(245,158,11,.15);color:#fcd34d;}
+  .badge.manager{background:rgba(16,185,129,.12);color:#6ee7b7;}
+  .badge.admin-r{background:rgba(239,68,68,.12);color:#fca5a5;}
+
+  /* TOP LIST */
+  .top-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(42,42,61,.5);}
+  .top-item:last-child{border-bottom:none;}
+  .top-rank{width:20px;font-size:11px;color:var(--muted);font-family:'Space Mono',monospace;flex-shrink:0;}
+  .top-rank.gold{color:#f59e0b;}
+  .top-thumb{width:32px;height:32px;border-radius:6px;background:linear-gradient(135deg,#2a2a3d,#1e1e2e);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;overflow:hidden;}
+  .top-thumb img{width:100%;height:100%;object-fit:cover;}
+  .top-info .t-name{font-size:12px;font-weight:500;}
+  .top-info .t-sub{font-size:10px;color:var(--muted);}
+  .top-count{margin-left:auto;font-size:11px;color:var(--muted);font-family:'Space Mono',monospace;}
+
+  /* BAR CHART */
+  .bar-chart{display:flex;flex-direction:column;gap:8px;}
+  .bar-row{display:flex;align-items:center;gap:8px;}
+  .bar-label{font-size:11px;color:var(--muted);width:70px;flex-shrink:0;text-align:right;}
+  .bar-track{flex:1;height:8px;background:var(--border);border-radius:4px;overflow:hidden;}
+  .bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .6s ease;}
+  .bar-val{font-size:11px;color:var(--muted);font-family:'Space Mono',monospace;width:40px;text-align:right;}
+
+  /* DONUT */
+  .donut-wrap{display:flex;align-items:center;gap:16px;}
+  .donut-legend{display:flex;flex-direction:column;gap:6px;}
+  .leg-item{display:flex;align-items:center;gap:6px;font-size:11px;}
+  .leg-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+
+  /* BUTTONS */
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;border:none;font-family:inherit;transition:all .15s;}
+  .btn-primary{background:var(--accent);color:#fff;}
+  .btn-primary:hover{background:#6d28d9;}
+  .btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border);}
+  .btn-ghost:hover{color:var(--text);border-color:var(--muted);}
+  .btn-sm{padding:4px 10px;font-size:11px;}
+  .btn-danger{background:rgba(239,68,68,.1);color:#f87171;border:1px solid rgba(239,68,68,.3);}
+
+  /* FILTERS */
+  .filters{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center;}
+  .filter-select{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:8px;font-size:12px;font-family:inherit;outline:none;cursor:pointer;}
+  .page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+  .page-title{font-size:18px;font-weight:700;}
+
+  /* PAGINATION */
+  .pagination{display:flex;align-items:center;gap:4px;margin-top:16px;justify-content:center;}
+  .page-btn{width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-size:12px;font-family:inherit;}
+  .page-btn.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .page-btn:hover:not(.active){background:var(--surface2);}
+
+  /* STAT CARDS */
+  .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+  .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;}
+  .stat-icon{font-size:24px;margin-bottom:8px;}
+  .stat-val{font-size:22px;font-weight:700;font-family:'Space Mono',monospace;}
+  .stat-lbl{font-size:10px;color:var(--muted);margin-top:4px;}
+  .stat-card.s-purple{border-color:rgba(124,58,237,.4);}
+  .stat-card.s-green{border-color:rgba(16,185,129,.4);}
+  .stat-card.s-blue{border-color:rgba(59,130,246,.4);}
+  .stat-card.s-yellow{border-color:rgba(245,158,11,.4);}
+
+  /* FORMS */
+  .form-group{margin-bottom:14px;}
+  .form-label{font-size:11px;font-weight:600;color:var(--muted);margin-bottom:6px;display:block;text-transform:uppercase;letter-spacing:.5px;}
+  .form-input{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;font-size:12px;font-family:inherit;outline:none;transition:border-color .15s;}
+  .form-input:focus{border-color:var(--accent);}
+  .form-select{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;font-size:12px;font-family:inherit;outline:none;}
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+  /* SUBSCRIPTION CARDS */
+  .sub-cards{display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:500px;margin-bottom:24px;}
+  .sub-card{border-radius:12px;padding:20px;border:2px solid var(--border);background:var(--surface);position:relative;}
+  .sub-card.premium{border-color:var(--accent);background:rgba(124,58,237,.08);}
+  .sub-card-type{font-size:18px;font-weight:700;margin-bottom:4px;}
+  .sub-card-price{font-size:28px;font-weight:700;font-family:'Space Mono',monospace;color:var(--accent2);margin:10px 0;}
+  .sub-feature{font-size:11px;color:var(--muted);padding:3px 0;}
+  .sub-feature::before{content:'✓ ';color:var(--green);}
+
+  /* ARTIST GRID */
+  .artist-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+  .artist-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;cursor:pointer;transition:all .15s;}
+  .artist-card:hover{border-color:var(--accent);transform:translateY(-2px);}
+  .artist-avatar{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:10px;overflow:hidden;}
+  .artist-avatar img{width:100%;height:100%;object-fit:cover;}
+  .artist-name{font-size:13px;font-weight:600;margin-bottom:2px;}
+  .artist-meta{font-size:11px;color:var(--muted);}
+  .img-thumb{border-radius:6px;overflow:hidden;background:linear-gradient(135deg,#2a2a3d,#1e1e2e);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .img-thumb img{width:100%;height:100%;object-fit:cover;}
+  .img-avatar-lg{border-radius:50%;overflow:hidden;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .img-avatar-lg img{width:100%;height:100%;object-fit:cover;}
+  .album-cover{width:60px;height:60px;border-radius:8px;overflow:hidden;background:linear-gradient(135deg,#2a2a3d,var(--surface2));display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;}
+  .album-cover img{width:100%;height:100%;object-fit:cover;}
+
+  /* PLAYLIST GRID */
+  .playlist-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+  .playlist-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;cursor:pointer;transition:border-color .15s;}
+  .playlist-card:hover{border-color:var(--accent);}
+  .pl-icon{font-size:32px;margin-bottom:10px;}
+  .pl-name{font-size:13px;font-weight:600;margin-bottom:4px;}
+  .pl-meta{font-size:11px;color:var(--muted);}
+
+  /* AUDIT */
+  .audit-row{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid rgba(42,42,61,.5);}
+  .audit-row:last-child{border-bottom:none;}
+  .audit-type{font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;flex-shrink:0;margin-top:2px;}
+  .audit-type.ins{background:rgba(16,185,129,.15);color:#34d399;}
+  .audit-type.upd{background:rgba(245,158,11,.15);color:#fcd34d;}
+  .audit-type.del{background:rgba(239,68,68,.15);color:#f87171;}
+  .audit-info .a-table{font-size:12px;font-weight:600;}
+  .audit-info .a-detail{font-size:11px;color:var(--muted);margin-top:2px;}
+  .audit-time{margin-left:auto;font-size:10px;color:var(--muted);font-family:'Space Mono',monospace;flex-shrink:0;}
+
+  .tag{display:inline-block;background:rgba(124,58,237,.1);color:#a78bfa;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:500;margin:2px;}
+  .section-sep{height:1px;background:var(--border);margin:16px 0;}
+  .record-link{cursor:pointer;transition:color .15s;}
+  .record-link:hover{color:var(--accent2);text-decoration:underline;}
+
+  /* MODAL */
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:100;display:none;backdrop-filter:blur(4px);}
+  .modal-overlay.open{display:flex;}
+  .modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;width:480px;max-height:80vh;overflow-y:auto;}
+  .modal-title{font-size:16px;font-weight:700;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;}
+  .modal-close{background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;line-height:1;}
+  .modal-close:hover{color:var(--text);}
+
+  /* LOADING */
+  .loading{text-align:center;padding:40px;color:var(--muted);}
+  .spinner{display:inline-block;width:24px;height:24px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .6s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .empty-state{text-align:center;padding:40px;color:var(--muted);font-size:13px;}
+
+  /* TOAST */
+  .toast-container{position:fixed;top:20px;right:20px;z-index:200;display:flex;flex-direction:column;gap:8px;}
+  .toast{padding:12px 16px;border-radius:8px;font-size:12px;color:#fff;animation:slideIn .3s ease;min-width:250px;}
+  .toast.success{background:#059669;}
+  .toast.error{background:#dc2626;}
+  @keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+
+  ::-webkit-scrollbar{width:4px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+  ::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+</style>
+</head>
+<body>
+
+<div class="toast-container" id="toast-container"></div>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen" style="position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;align-items:center;justify-content:center;">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px;width:360px;text-align:center;">
+    <div style="font-size:28px;font-weight:800;margin-bottom:4px;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">◈ AudioLib</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:24px;">Увійдіть до системи</div>
+    <div class="form-group" style="text-align:left;">
+      <label class="form-label">Email</label>
+      <input class="form-input" id="login-email" type="email" placeholder="your@email.com">
+    </div>
+    <div id="login-error" style="color:#f87171;font-size:11px;margin-bottom:8px;display:none;"></div>
+    <button class="btn btn-primary" style="width:100%;margin-top:8px;" onclick="doLogin()">Увійти</button>
+    <div style="font-size:10px;color:var(--muted);margin-top:16px;">Введіть email зареєстрованого користувача</div>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="app-sidebar" style="display:none;">
+  <div class="logo">
+    <div class="logo-title">◈ AudioLib</div>
+    <div class="logo-sub">Музична аудіотека</div>
+  </div>
+  <nav class="nav" id="nav-menu">
+    <div class="nav-section">Головне</div>
+    <div class="nav-item active" onclick="showPage('dashboard',this)" id="nav-dashboard"><span class="icon">⊞</span>Дашборд</div>
+    <div class="nav-item" onclick="showPage('catalog',this)" id="nav-catalog"><span class="icon">♫</span>Каталог</div>
+    <div class="nav-item" onclick="showPage('artists',this)" id="nav-artists"><span class="icon">🎤</span>Виконавці</div>
+    <div class="nav-item" onclick="showPage('playlists',this)" id="nav-playlists"><span class="icon">☰</span>Плейлисти</div>
+    <div class="nav-section">Аналітика</div>
+    <div class="nav-item" onclick="showPage('stats',this)" id="nav-stats"><span class="icon">◈</span>Статистика</div>
+    <div class="nav-section">Управління</div>
+    <div class="nav-item" onclick="showPage('subscriptions',this)" id="nav-subscriptions"><span class="icon">★</span>Підписки</div>
+    <div class="nav-item nav-admin-only" onclick="showPage('audit',this)" id="nav-audit"><span class="icon">⊙</span>Журнал аудиту</div>
+    <div class="nav-item nav-admin-only" onclick="showPage('adminpanel',this)" id="nav-adminpanel"><span class="icon">⚙</span>Адмін-панель</div>
+  </nav>
+  <div class="user-area">
+    <div class="user-card" style="cursor:pointer;" onclick="doLogout()" title="Вийти з системи">
+      <div class="avatar" id="user-avatar">АС</div>
+      <div class="user-info">
+        <div class="name" id="user-name">Адмін Системний</div>
+        <div class="role" id="role-label">Адміністратор</div>
+      </div>
+      <div style="margin-left:auto;font-size:14px;color:var(--muted);" title="Вийти">⏻</div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main" id="app-main" style="display:none;">
+  <div class="topbar">
+    <div class="topbar-title" id="page-title">Дашборд</div>
+    <span class="topbar-path" id="page-path">/ Головна</span>
+    <div class="search-bar">
+      <span style="color:var(--muted);font-size:14px;">⌕</span>
+      <input type="text" placeholder="Пошук виконавця, треку..." id="global-search" onkeydown="if(event.key==='Enter')doGlobalSearch()">
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ═══ DASHBOARD ═══ -->
+    <div class="page active" id="page-dashboard">
+      <div class="loading"><div class="spinner"></div><p style="margin-top:8px">Завантаження...</p></div>
+    </div>
+
+    <!-- ═══ CATALOG ═══ -->
+    <div class="page" id="page-catalog">
+      <div class="page-header">
+        <div class="page-title">Каталог аудіозаписів</div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-ghost btn-sm mgr-only" onclick="openModal('addRecord')">+ Додати запис</button>
+        </div>
+      </div>
+      <div class="filters" id="catalog-filters"></div>
+      <div id="catalog-table"><div class="loading"><div class="spinner"></div></div></div>
+      <div id="catalog-pagination"></div>
+    </div>
+
+    <!-- ═══ ARTISTS ═══ -->
+    <div class="page" id="page-artists">
+      <div class="page-header">
+        <div class="page-title">Виконавці</div>
+        <button class="btn btn-primary btn-sm mgr-only" onclick="openModal('addArtist')">+ Додати виконавця</button>
+      </div>
+      <div class="filters" id="artist-filters"></div>
+      <div id="artist-grid-container"><div class="loading"><div class="spinner"></div></div></div>
+      <div id="artist-pagination"></div>
+    </div>
+
+    <!-- ═══ ARTIST DETAILS ═══ -->
+    <div class="page" id="page-artist-details">
+      <div id="artist-details-content"></div>
+    </div>
+
+    <!-- ═══ PLAYLISTS ═══ -->
+    <div class="page" id="page-playlists">
+      <div class="page-header">
+        <div class="page-title">Мої плейлисти</div>
+        <button class="btn btn-primary btn-sm" onclick="openModal('addPlaylist')">+ Новий плейлист</button>
+      </div>
+      <div class="filters" id="playlist-filters"></div>
+      <div id="playlist-grid-container"><div class="loading"><div class="spinner"></div></div></div>
+    </div>
+
+    <!-- ═══ PLAYLIST DETAILS ═══ -->
+    <div class="page" id="page-playlist-details">
+      <div id="playlist-details-content"></div>
+    </div>
+
+    <!-- ═══ STATS ═══ -->
+    <div class="page" id="page-stats">
+      <div class="page-header">
+        <div class="page-title">Статистика прослуховувань</div>
+        <div style="display:flex;gap:8px">
+          <select class="filter-select" id="stats-period" onchange="loadStats()">
+            <option value="30">Цей місяць</option>
+            <option value="7">Остання неділя</option>
+            <option value="90">3 місяці</option>
+            <option value="365">Рік</option>
+          </select>
+        </div>
+      </div>
+      <div id="stats-content"><div class="loading"><div class="spinner"></div></div></div>
+    </div>
+
+    <!-- ═══ SUBSCRIPTIONS ═══ -->
+    <div class="page" id="page-subscriptions">
+      <div class="page-header">
+        <div class="page-title">Підписки</div>
+      </div>
+      <div id="subscriptions-content"><div class="loading"><div class="spinner"></div></div></div>
+    </div>
+
+    <!-- ═══ AUDIT ═══ -->
+    <div class="page" id="page-audit">
+      <div class="page-header">
+        <div class="page-title">Журнал аудиту</div>
+        <div style="display:flex;gap:8px">
+          <select class="filter-select" id="audit-operation" onchange="loadAudit()">
+            <option value="">Всі операції</option>
+            <option value="INSERT">INSERT</option>
+            <option value="UPDATE">UPDATE</option>
+            <option value="DELETE">DELETE</option>
+          </select>
+          <select class="filter-select" id="audit-table" onchange="loadAudit()">
+            <option value="">Всі таблиці</option>
+            <option value="users">users</option>
+            <option value="records">records</option>
+            <option value="artists">artists</option>
+            <option value="albums">albums</option>
+            <option value="subscriptions">subscriptions</option>
+          </select>
+        </div>
+      </div>
+      <div id="audit-content"><div class="loading"><div class="spinner"></div></div></div>
+      <div id="audit-pagination"></div>
+    </div>
+
+    <!-- ═══ ADMIN PANEL ═══ -->
+    <div class="page" id="page-adminpanel">
+      <div class="page-header"><div class="page-title">Панель адміністратора</div></div>
+      <div class="two-col">
+        <div class="card">
+          <div class="card-title">Управління користувачами</div>
+          <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center;">
+            <select id="admin-user-select" class="filter-select" style="flex:1;margin:0;" onchange="adminSelectUser(this.value)"></select>
+          </div>
+          <div id="admin-user-detail" style="display:none;">
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;padding:12px;background:var(--bg);border-radius:8px;">
+              <div class="avatar" id="admin-user-avatar" style="width:40px;height:40px;font-size:14px;">АС</div>
+              <div>
+                <div style="font-weight:600;font-size:13px;" id="admin-user-name"></div>
+                <div style="font-size:11px;color:var(--muted);" id="admin-user-email"></div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Роль</label>
+              <select class="form-select" id="admin-user-role">
+                <option value="1">admin</option>
+                <option value="2">manager</option>
+                <option value="3">listener</option>
+              </select>
+            </div>
+            <button class="btn btn-primary btn-sm" style="width:100%;" onclick="adminSaveUserRole()">Зберегти роль</button>
+          </div>
+          <div class="section-sep"></div>
+          <div id="admin-users-table"><div class="loading"><div class="spinner"></div></div></div>
+          <div style="margin-top:12px"><button class="btn btn-primary btn-sm" onclick="openModal('addUser')">+ Додати користувача</button></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Імпорт з MusicBrainz API</div>
+          <div class="form-group"><label class="form-label">Інформація</label>
+            <div style="padding:10px;background:var(--bg);border-radius:8px;font-size:11px;color:var(--muted);font-family:'Space Mono',monospace" id="import-status">
+              Натисніть кнопку для запуску імпорту
+            </div>
+          </div>
+          <button class="btn btn-primary" style="width:100%" onclick="runImport()" id="import-btn">⤓ Запустити імпорт</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- content -->
+
+
+</div><!-- main -->
+
+<!-- ═══ MODALS ═══ -->
+
+<!-- View Record -->
+<div class="modal-overlay" id="modal-viewRecord">
+  <div class="modal">
+    <div class="modal-title">Інформація про запис <button class="modal-close" onclick="closeModal('viewRecord')">✕</button></div>
+    <div id="view-record-content"></div>
+  </div>
+</div>
+
+<!-- Add Record -->
+<div class="modal-overlay" id="modal-addRecord">
+  <div class="modal">
+    <div class="modal-title">Додати аудіозапис <button class="modal-close" onclick="closeModal('addRecord')">✕</button></div>
+    <div class="form-group"><label class="form-label">Назва</label><input class="form-input" id="ar-title" placeholder="Введіть назву..."></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Виконавець</label><select class="form-select" id="ar-artist"></select></div>
+      <div class="form-group"><label class="form-label">Альбом</label><select class="form-select" id="ar-album"><option value="">— без альбому —</option></select></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Тривалість (сек)</label><input class="form-input" type="number" id="ar-length" placeholder="240"></div>
+      <div class="form-group"><label class="form-label">Рік випуску</label><input class="form-input" type="number" id="ar-year" placeholder="2024"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Тип</label><select class="form-select" id="ar-type"><option value="song">song</option><option value="podcast">podcast</option><option value="audiobook">audiobook</option></select></div>
+      <div class="form-group"><label class="form-label">Жанри</label><select class="form-select" id="ar-genre" multiple></select></div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px">
+      <button class="btn btn-ghost" onclick="closeModal('addRecord')">Скасувати</button>
+      <button class="btn btn-primary" onclick="saveRecord()">Зберегти</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Record -->
+<div class="modal-overlay" id="modal-editRecord">
+  <div class="modal">
+    <div class="modal-title">Редагувати запис <button class="modal-close" onclick="closeModal('editRecord')">✕</button></div>
+    <input type="hidden" id="er-id">
+    <div class="form-group"><label class="form-label">Назва</label><input class="form-input" id="er-title"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Виконавець</label><select class="form-select" id="er-artist"></select></div>
+      <div class="form-group"><label class="form-label">Альбом</label><select class="form-select" id="er-album"><option value="">— без альбому —</option></select></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Тривалість (сек)</label><input class="form-input" type="number" id="er-length"></div>
+      <div class="form-group"><label class="form-label">Рік випуску</label><input class="form-input" type="number" id="er-year"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Тип</label><select class="form-select" id="er-type"><option value="song">song</option><option value="podcast">podcast</option><option value="audiobook">audiobook</option></select></div>
+      <div class="form-group"><label class="form-label">Жанри</label><select class="form-select" id="er-genre" multiple></select></div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px">
+      <button class="btn btn-ghost" onclick="closeModal('editRecord')">Скасувати</button>
+      <button class="btn btn-primary" onclick="updateRecord()">Зберегти зміни</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Artist -->
+<div class="modal-overlay" id="modal-addArtist">
+  <div class="modal">
+    <div class="modal-title">Додати виконавця <button class="modal-close" onclick="closeModal('addArtist')">✕</button></div>
+    <div class="form-group"><label class="form-label">Ім'я / Назва гурту</label><input class="form-input" id="aa-name" placeholder="Введіть ім'я..."></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Країна</label><input class="form-input" id="aa-country" placeholder="USA, UK, Ukraine..."></div>
+      <div class="form-group"><label class="form-label">Стиль</label><input class="form-input" id="aa-style" placeholder="Hip-Hop, Rock..."></div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px">
+      <button class="btn btn-ghost" onclick="closeModal('addArtist')">Скасувати</button>
+      <button class="btn btn-primary" onclick="saveArtist()">Зберегти</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Album -->
+<div class="modal-overlay" id="modal-addAlbum">
+  <div class="modal">
+    <div class="modal-title">Створити альбом <button class="modal-close" onclick="closeModal('addAlbum')">✕</button></div>
+    <input type="hidden" id="alb-artist-id">
+    <div class="form-group"><label class="form-label">Назва альбому</label><input class="form-input" id="alb-title" placeholder="Введіть назву..."></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Рік випуску</label><input class="form-input" type="number" id="alb-year" placeholder="2026"></div>
+      <div class="form-group"><label class="form-label">Жанри</label><select class="form-select" id="alb-genre" multiple></select></div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px">
+      <button class="btn btn-ghost" onclick="closeModal('addAlbum')">Скасувати</button>
+      <button class="btn btn-primary" onclick="saveAlbum()">Зберегти</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Playlist -->
+<div class="modal-overlay" id="modal-addPlaylist">
+  <div class="modal">
+    <div class="modal-title">Новий плейлист <button class="modal-close" onclick="closeModal('addPlaylist')">✕</button></div>
+    <div class="form-group"><label class="form-label">Назва</label><input class="form-input" id="ap-title" placeholder="Моя підбірка..."></div>
+    <div class="form-group"><label class="form-label">Опис (необов'язково)</label><input class="form-input" id="ap-desc" placeholder="Короткий опис..."></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px">
+      <button class="btn btn-ghost" onclick="closeModal('addPlaylist')">Скасувати</button>
+      <button class="btn btn-primary" onclick="savePlaylist()">Створити</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add User -->
+<div class="modal-overlay" id="modal-addUser">
+  <div class="modal">
+    <div class="modal-title">Додати користувача <button class="modal-close" onclick="closeModal('addUser')">✕</button></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Ім'я</label><input class="form-input" id="au-fname" placeholder="Ім'я"></div>
+      <div class="form-group"><label class="form-label">Прізвище</label><input class="form-input" id="au-lname" placeholder="Прізвище"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="au-email" placeholder="email@example.com" type="email"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Роль</label><select class="form-select" id="au-role"><option value="3">listener</option><option value="2">content_manager</option><option value="1">admin</option></select></div>
+      <div class="form-group"><label class="form-label">Підписка</label><select class="form-select" id="au-sub"><option value="free">Free</option><option value="premium">Premium</option></select></div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px">
+      <button class="btn btn-ghost" onclick="closeModal('addUser')">Скасувати</button>
+      <button class="btn btn-primary" onclick="saveUser()">Створити</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add to Playlist -->
+<div class="modal-overlay" id="modal-addToPlaylist">
+  <div class="modal">
+    <div class="modal-title">Додати до плейлиста <button class="modal-close" onclick="closeModal('addToPlaylist')">✕</button></div>
+    <input type="hidden" id="atp-record-id">
+    <div id="atp-playlists"></div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// AudioLib Frontend — API Integration
+// ============================================================
+
+const API = '';
+let currentRole = 'admin';
+let currentUserId = 1;
+let currentPage = 'dashboard';
+let genres = [];
+let artistsList = [];
+
+
+// ── Utilities ────────────────────────────────────────────────
+
+function toast(msg, type = 'success') {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+async function api(url, opts = {}) {
+  opts.headers = { ...opts.headers, 'Content-Type': 'application/json', 'x-user-id': currentUserId };
+  if (opts.body && typeof opts.body === 'object') opts.body = JSON.stringify(opts.body);
+  const res = await fetch(API + url, opts);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Помилка');
+  return data;
+}
+
+function fmtTime(sec) {
+  if (!sec) return '0:00';
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${m}:${String(s).padStart(2, '0')}`;
+}
+
+function fmtDate(d) {
+  if (!d) return '—';
+  const dt = new Date(d);
+  return dt.toLocaleDateString('uk-UA', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function fmtDateTime(d) {
+  if (!d) return '—';
+  const dt = new Date(d);
+  return dt.toLocaleDateString('uk-UA', { day: '2-digit', month: '2-digit' }) + ' ' +
+         dt.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' });
+}
+
+function typeBadge(t) {
+  const labels = { song: 'пісня', podcast: 'подкаст', audiobook: 'аудіокнига' };
+  return `<span class="badge ${t}">${labels[t] || t}</span>`;
+}
+
+function genreTags(g) {
+  if (!g) return '';
+  return g.split(', ').map(x => `<span class="tag">${x}</span>`).join('');
+}
+
+// Image helpers
+function artImg(url, fallback, size) {
+  if (url) return `<img src="${url}" alt="" onerror="this.parentElement.innerHTML='${fallback}'" loading="lazy">`;
+  return fallback;
+}
+
+let allUsers = [];
+
+async function init() {
+  try {
+    const [g, u] = await Promise.all([api('/api/genres'), api('/api/users')]);
+    genres = g;
+    allUsers = u;
+    populateGenreSelects();
+  } catch (e) {
+    console.error('Init error:', e);
+  }
+  
+  // Set up routing
+  window.addEventListener('hashchange', handleRoute);
+
+  // Check if user is saved in session
+  const savedUserId = sessionStorage.getItem('audiolib_user_id');
+  if (savedUserId) {
+    const u = allUsers.find(x => x.id == savedUserId);
+    if (u) {
+      enterApp(u);
+      return;
+    }
+  }
+  // Show login screen
+  document.getElementById('login-screen').style.display = 'flex';
+}
+
+function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const errEl = document.getElementById('login-error');
+  if (!email) {
+    errEl.textContent = 'Введіть email';
+    errEl.style.display = 'block';
+    return;
+  }
+  const u = allUsers.find(x => x.email.toLowerCase() === email.toLowerCase());
+  if (!u) {
+    errEl.textContent = 'Користувача з такою поштою не знайдено';
+    errEl.style.display = 'block';
+    return;
+  }
+  errEl.style.display = 'none';
+  sessionStorage.setItem('audiolib_user_id', u.id);
+  enterApp(u);
+}
+
+// Handle Enter key on login
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('login-screen').style.display !== 'none') {
+    doLogin();
+  }
+});
+
+function enterApp(u) {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app-sidebar').style.display = '';
+  document.getElementById('app-main').style.display = '';
+  switchUser(u.id, true);
+  
+  if (!window.location.hash) {
+    window.location.hash = '#/dashboard';
+  } else {
+    handleRoute();
+  }
+}
+
+function doLogout() {
+  sessionStorage.removeItem('audiolib_user_id');
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app-sidebar').style.display = 'none';
+  document.getElementById('app-main').style.display = 'none';
+  document.getElementById('login-email').value = '';
+  window.location.hash = '';
+}
+
+function populateGenreSelects() {
+  ['ar-genre', 'er-genre', 'alb-genre'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML = genres.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
+  });
+}
+
+// ── Navigation ───────────────────────────────────────────────
+
+const pageTitles = {
+  dashboard:'Дашборд', catalog:'Каталог аудіозаписів', artists:'Виконавці',
+  playlists:'Мої плейлисти', stats:'Статистика прослуховувань',
+  subscriptions:'Підписки', audit:'Журнал аудиту', adminpanel:'Панель адміністратора',
+  'artist-details':'Деталі виконавця', 'playlist-details':'Деталі плейлиста'
+};
+const pagePaths = {
+  dashboard:'/ Головна', catalog:'/ Каталог', artists:'/ Виконавці',
+  playlists:'/ Плейлисти', stats:'/ Статистика', subscriptions:'/ Підписки',
+  audit:'/ Аудит', adminpanel:'/ Адмін', 'artist-details':'/ Виконавці / Деталі',
+  'playlist-details':'/ Плейлисти / Деталі'
+};
+
+function navigate(path) {
+  window.location.hash = path;
+}
+
+function handleRoute() {
+  const hash = window.location.hash || '#/dashboard';
+  const parts = hash.replace('#', '').split('/').filter(Boolean);
+  const page = parts[0] || 'dashboard';
+  const id = parts[1] ? parseInt(parts[1]) : null;
+
+  // Visual update
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  
+  const pgName = (page === 'artists' && id) ? 'artist-details' : (page === 'playlists' && id) ? 'playlist-details' : page;
+  const pg = document.getElementById('page-' + pgName);
+  if (pg) pg.classList.add('active');
+
+  const navEl = document.getElementById('nav-' + page);
+  if (navEl && !id) navEl.classList.add('active');
+  else if (document.getElementById('nav-' + pgName)) document.getElementById('nav-' + pgName).classList.add('active');
+
+  document.getElementById('page-title').textContent = pageTitles[pgName] || pgName;
+  document.getElementById('page-path').textContent = pagePaths[pgName] || '';
+  currentPage = pgName;
+
+  // Load data for page based on route parsing
+  if (page === 'dashboard') loadDashboard();
+  else if (page === 'catalog') loadCatalog();
+  else if (page === 'artists' && !id) loadArtists();
+  else if (page === 'artists' && id) loadArtistDetails(id);
+  else if (page === 'playlists' && !id) loadPlaylists();
+  else if (page === 'playlists' && id) loadPlaylistDetails(id);
+  else if (page === 'stats') loadStats();
+  else if (page === 'subscriptions') loadSubscriptions();
+  else if (page === 'audit') loadAudit();
+  else if (page === 'adminpanel') loadAdminPanel();
+}
+
+// Keep showPage for backwards compatibility but make it just change hash where possible
+function showPage(name, el) {
+  if (name === 'artist-details' || name === 'playlist-details') {
+    // Rely on caller to change hash for these, or fallback
+    return;
+  }
+  navigate('#/' + name);
+}
+
+// ── Users ────────────────────────────────────────────────────
+
+function switchUser(userId, isInit = false) {
+  const u = allUsers.find(x => x.id == userId);
+  if (!u) return;
+  
+  currentUserId = u.id;
+  currentRole = u.role || 'listener';
+  
+  document.getElementById('user-avatar').textContent = (u.first_name[0] + u.last_name[0]).toUpperCase();
+  document.getElementById('user-name').textContent = u.first_name + ' ' + u.last_name;
+  
+  let roleLabel = 'Слухач' + (u.sub_type === 'premium' ? ' · Premium' : '');
+  if (currentRole === 'admin') roleLabel = 'Адміністратор';
+  else if (currentRole === 'manager') roleLabel = 'Контент-менеджер';
+  document.getElementById('role-label').textContent = roleLabel;
+
+  // Show/hide admin-only items
+  document.querySelectorAll('.nav-admin-only').forEach(el => el.style.display = currentRole === 'admin' ? '' : 'none');
+  document.querySelectorAll('.mgr-only').forEach(el => el.style.display = (currentRole === 'admin' || currentRole === 'manager') ? '' : 'none');
+  document.querySelectorAll('.admin-only').forEach(el => el.style.display = currentRole === 'admin' ? '' : 'none');
+
+  if (!isInit) {
+    // If on admin-only page but user lacks access, redirect to dashboard
+    if ((currentPage === 'audit' || currentPage === 'adminpanel') && currentRole !== 'admin') {
+      navigate('#/dashboard');
+    } else {
+      // Reload current page to apply permission visibility and fetch data for the correct user if needed
+      handleRoute();
+    }
+  }
+}
+
+// ── Dashboard ────────────────────────────────────────────────
+
+async function loadDashboard() {
+  const container = document.getElementById('page-dashboard');
+  try {
+    const data = await api('/api/dashboard');
+    const topTracksHtml = (data.topTracks || []).map((t, i) => `
+      <div class="top-item">
+        <div class="top-rank ${i < 2 ? 'gold' : ''}">${i + 1}</div>
+        <div class="top-thumb">${t.album_image ? `<img src="${t.album_image}" alt="">` : '🎵'}</div>
+        <div class="top-info"><div class="t-name">${t.title}</div><div class="t-sub">${t.artist_name}</div></div>
+        <div class="top-count">${t.cnt}</div>
+      </div>`).join('') || '<div class="empty-state">Немає даних</div>';
+
+    const topTracksPeriodLabels = { week: 'тижня', month: 'місяця', alltime: 'за весь час' };
+    const topTracksPeriodLabel = topTracksPeriodLabels[data.topTracksPeriod] || 'тижня';
+
+    const genreColors = ['#7c3aed','#a855f7','#10b981','#f59e0b','#3b82f6','#ef4444'];
+    const maxGenre = Math.max(...(data.genreStats || []).map(g => parseInt(g.cnt)), 1);
+    const genreBarHtml = (data.genreStats || []).map(g => `
+      <div class="bar-row">
+        <div class="bar-label">${g.name}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${Math.round(parseInt(g.cnt)/maxGenre*100)}%"></div></div>
+        <div class="bar-val">${g.cnt}</div>
+      </div>`).join('') || '<div class="empty-state">Немає даних</div>';
+
+    const premPct = data.subStats.premium > 0 ?
+      Math.round(parseInt(data.subStats.premium) / (parseInt(data.subStats.premium) + parseInt(data.subStats.free)) * 100) : 0;
+
+    // Build donut from genreStats
+    const total = (data.genreStats || []).reduce((s, g) => s + parseInt(g.cnt), 0) || 1;
+    let donutSvg = '<circle cx="40" cy="40" r="30" fill="none" stroke="#2a2a3d" stroke-width="12"/>';
+    let offset = 0;
+    const circumference = 2 * Math.PI * 30; // ~188.5
+    const donutLegend = [];
+    (data.genreStats || []).slice(0, 4).forEach((g, i) => {
+      const pct = parseInt(g.cnt) / total;
+      const dashLen = pct * circumference;
+      donutSvg += `<circle cx="40" cy="40" r="30" fill="none" stroke="${genreColors[i]}" stroke-width="12" stroke-dasharray="${dashLen} ${circumference - dashLen}" stroke-dashoffset="${-offset}" transform="rotate(-90 40 40)"/>`;
+      offset += dashLen;
+      donutLegend.push(`<div class="leg-item"><div class="leg-dot" style="background:${genreColors[i]}"></div>${g.name} ${Math.round(pct*100)}%</div>`);
+    });
+
+    const isAdmin = currentRole === 'admin';
+
+    container.innerHTML = `
+      <div class="kpi-grid">
+        <div class="kpi-card accent"><div class="kpi-label">Аудіозаписів</div><div class="kpi-value" style="color:#a78bfa">${data.records.toLocaleString()}</div><div class="kpi-sub">у каталозі</div></div>
+        ${isAdmin ? `<div class="kpi-card green"><div class="kpi-label">Прослуховувань</div><div class="kpi-value" style="color:#34d399">${data.listenings.toLocaleString()}</div><div class="kpi-sub">цього місяця</div></div>` : ''}
+        ${isAdmin ? `<div class="kpi-card yellow"><div class="kpi-label">Активних слухачів</div><div class="kpi-value" style="color:#fbbf24">${data.activeUsers}</div><div class="kpi-sub">з активною підпискою</div></div>` : ''}
+        <div class="kpi-card"><div class="kpi-label">Виконавців</div><div class="kpi-value">${data.artists}</div><div class="kpi-sub">в базі даних</div></div>
+      </div>
+      <div class="three-col">
+        <div class="card">
+          <div class="card-title"><span class="icon">↑</span> Топ-5 треків ${topTracksPeriodLabel}</div>
+          ${topTracksHtml}
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div class="card" style="flex:1">
+            <div class="card-title"><span class="icon">◎</span> Жанри</div>
+            <div class="donut-wrap">
+              <svg width="80" height="80" viewBox="0 0 80 80">${donutSvg}</svg>
+              <div class="donut-legend">${donutLegend.join('')}</div>
+            </div>
+          </div>
+          ${isAdmin ? `<div class="card">
+            <div class="card-title">Підписки</div>
+            <div style="display:flex;gap:12px;align-items:center;">
+              <div style="text-align:center"><div style="font-size:20px;font-weight:700;color:#a78bfa;font-family:'Space Mono',monospace">${premPct}%</div><div style="font-size:10px;color:var(--muted)">Premium</div></div>
+              <div class="bar-track" style="flex:1;height:10px"><div class="bar-fill" style="width:${premPct}%"></div></div>
+            </div>
+            <div style="margin-top:8px;font-size:11px;color:var(--muted)">${data.subStats.premium} Premium · ${data.subStats.free} Free</div>
+          </div>` : ''}
+        </div>
+      </div>
+      ${isAdmin ? `<div class="card">
+        <div class="card-title">Прослуховування за жанрами (місяць)</div>
+        <div class="bar-chart">${genreBarHtml}</div>
+      </div>` : ''}`;
+  } catch (e) {
+    container.innerHTML = `<div class="empty-state">Помилка завантаження: ${e.message}</div>`;
+  }
+}
+
+// ── Catalog ──────────────────────────────────────────────────
+
+let catalogPage = 1;
+async function loadCatalog(page = 1) {
+  catalogPage = page;
+  const container = document.getElementById('catalog-table');
+  const paginationEl = document.getElementById('catalog-pagination');
+
+  // Build filters if empty
+  if (!document.getElementById('catalog-filters').innerHTML) {
+    document.getElementById('catalog-filters').innerHTML = `
+      <select class="filter-select" id="cf-genre"><option value="">Всі жанри</option>${genres.map(g => `<option value="${g.name}">${g.name}</option>`).join('')}</select>
+      <select class="filter-select" id="cf-type"><option value="">Всі типи</option><option value="song">Пісня</option><option value="podcast">Подкаст</option><option value="audiobook">Аудіокнига</option></select>
+      <select class="filter-select" id="cf-sort">
+        <option value="newest">Замовчуванням (Нові додані)</option>
+        <option value="oldest">Старі додані</option>
+        <option value="title_asc">Назва: А-Я</option>
+        <option value="title_desc">Назва: Я-А</option>
+        <option value="artist_asc">Виконавець: А-Я</option>
+        <option value="duration_desc">Тривалість: від найдовших</option>
+      </select>
+      <button class="btn btn-primary btn-sm" onclick="loadCatalog(1)">Застосувати</button>
+    `;
+  }
+
+  container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
+  try {
+    const genre = document.getElementById('cf-genre')?.value || '';
+    const type = document.getElementById('cf-type')?.value || '';
+    const search = document.getElementById('global-search')?.value || '';
+    const sort = document.getElementById('cf-sort')?.value || 'newest';
+    const params = new URLSearchParams({ page, limit: 20 });
+    if (genre) params.set('genre', genre);
+    if (type) params.set('type', type);
+    if (search) params.set('search', search);
+    params.set('sort', sort);
+
+    const data = await api(`/api/records?${params}`);
+    const isMgr = currentRole === 'admin' || currentRole === 'manager';
+    const isAdmin = currentRole === 'admin';
+
+    container.innerHTML = `<div class="card" style="padding:0"><table class="tbl">
+      <thead><tr>
+        <th>Назва</th><th>Виконавець</th><th>Тривалість</th><th>Тип</th><th>Жанр</th><th>Рік</th>
+        ${isMgr ? '<th style="width:120px"></th>' : ''}
+      </tr></thead>
+      <tbody>${data.data.map(r => `<tr>
+        <td><div style="font-weight:500" class="record-link" onclick="viewRecord(${r.id})">${r.title}</div></td>
+        <td style="color:var(--muted)">${r.artist_name}</td>
+        <td style="font-family:'Space Mono',monospace;font-size:11px">${fmtTime(r.length)}</td>
+        <td>${typeBadge(r.type)}</td>
+        <td>${genreTags(r.genres)}</td>
+        <td>${r.release_year || '—'}</td>
+        ${isMgr ? `<td>
+          <button class="btn btn-ghost btn-sm" onclick="editRecord(${r.id})">✏</button>
+          ${isAdmin ? `<button class="btn btn-danger btn-sm" onclick="deleteRecord(${r.id})">✕</button>` : ''}
+        </td>` : ''}
+      </tr>`).join('')}</tbody></table></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;">
+        <div style="font-size:11px;color:var(--muted)">Показано ${(page-1)*20+1}–${Math.min(page*20, data.total)} з ${data.total} записів</div>
+      </div>`;
+
+    // Pagination
+    let pagHtml = '';
+    if (data.totalPages > 1) {
+      pagHtml = '<div class="pagination">';
+      if (page > 1) pagHtml += `<button class="page-btn" onclick="loadCatalog(${page-1})">‹</button>`;
+      for (let i = 1; i <= Math.min(data.totalPages, 7); i++) {
+        pagHtml += `<button class="page-btn ${i===page?'active':''}" onclick="loadCatalog(${i})">${i}</button>`;
+      }
+      if (data.totalPages > 7) pagHtml += `<button class="page-btn">…</button><button class="page-btn" onclick="loadCatalog(${data.totalPages})">${data.totalPages}</button>`;
+      if (page < data.totalPages) pagHtml += `<button class="page-btn" onclick="loadCatalog(${page+1})">›</button>`;
+      pagHtml += '</div>';
+    }
+    paginationEl.innerHTML = pagHtml;
+  } catch (e) {
+    container.innerHTML = `<div class="empty-state">Помилка: ${e.message}</div>`;
+  }
+}
+
+async function viewRecord(id) {
+  try {
+    const r = await api(`/api/records/${id}`);
+    // Try to get album image
+    let albumImg = '';
+    if (r.album_id) {
+      try {
+        const albums = await api('/api/albums?artist_id=' + r.artist_id);
+        const matchAlbum = albums.find(al => al.id === r.album_id);
+        if (matchAlbum && matchAlbum.image_url) albumImg = matchAlbum.image_url;
+      } catch(e) {}
+    }
+    document.getElementById('view-record-content').innerHTML = `
+      <div style="display:flex;gap:16px;margin-bottom:16px;">
+        <div class="img-thumb" style="width:100px;height:100px;border-radius:8px;font-size:36px;">${albumImg ? `<img src="${albumImg}" alt="">` : '🎵'}</div>
+        <div>
+          <div style="font-size:11px;color:var(--accent);font-weight:600;text-transform:uppercase;margin-bottom:4px;">${r.type} · ${r.release_year || '—'}</div>
+          <div style="font-size:20px;font-weight:700;margin-bottom:4px;">${r.title}</div>
+          <div style="font-size:13px;color:var(--muted);margin-bottom:8px;">${r.artist_name}${r.album_title ? ' — ' + r.album_title : ''}</div>
+          <div style="display:flex;gap:8px;margin-bottom:12px;">${genreTags(r.genres)}</div>
+          <div style="font-family:'Space Mono',monospace;font-size:11px;color:var(--muted)">Тривалість: ${fmtTime(r.length)}</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;border-top:1px solid var(--border);padding-top:12px;">
+        <button class="btn btn-ghost" onclick="addToPlaylistModal(${r.id})">+ Плейлист</button>
+        <button class="btn btn-primary" onclick="closeModal('viewRecord')">Закрити</button>
+      </div>`;
+    openModal('viewRecord');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function editRecord(id) {
+  try {
+    const r = await api(`/api/records/${id}`);
+    const artists = await api('/api/artists?limit=500');
+    const albums = await api('/api/albums');
+    document.getElementById('er-id').value = r.id;
+    document.getElementById('er-title').value = r.title;
+    document.getElementById('er-length').value = r.length;
+    document.getElementById('er-year').value = r.release_year || '';
+    document.getElementById('er-type').value = r.type;
+    document.getElementById('er-artist').innerHTML = artists.data.map(a => `<option value="${a.id}" ${a.id===r.artist_id?'selected':''}>${a.name}</option>`).join('');
+    document.getElementById('er-album').innerHTML = '<option value="">— без альбому —</option>' +
+      albums.map(a => `<option value="${a.id}" ${a.id===r.album_id?'selected':''}>${a.title}</option>`).join('');
+    openModal('editRecord');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function saveRecord() {
+  try {
+    const genreSelect = document.getElementById('ar-genre');
+    const genre_ids = Array.from(genreSelect.selectedOptions).map(o => parseInt(o.value));
+    await api('/api/records', { method: 'POST', body: {
+      title: document.getElementById('ar-title').value,
+      artist_id: parseInt(document.getElementById('ar-artist').value),
+      album_id: document.getElementById('ar-album').value || null,
+      length: parseInt(document.getElementById('ar-length').value) || 0,
+      release_year: parseInt(document.getElementById('ar-year').value) || null,
+      type: document.getElementById('ar-type').value,
+      genre_ids
+    }});
+    closeModal('addRecord');
+    toast('Запис створено');
+    loadCatalog(catalogPage);
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function updateRecord() {
+  try {
+    const id = document.getElementById('er-id').value;
+    const genreSelect = document.getElementById('er-genre');
+    const genre_ids = Array.from(genreSelect.selectedOptions).map(o => parseInt(o.value));
+    await api(`/api/records/${id}`, { method: 'PUT', body: {
+      title: document.getElementById('er-title').value,
+      artist_id: parseInt(document.getElementById('er-artist').value),
+      album_id: document.getElementById('er-album').value || null,
+      length: parseInt(document.getElementById('er-length').value) || 0,
+      release_year: parseInt(document.getElementById('er-year').value) || null,
+      type: document.getElementById('er-type').value,
+      genre_ids
+    }});
+    closeModal('editRecord');
+    toast('Запис оновлено');
+    loadCatalog(catalogPage);
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function deleteRecord(id) {
+  if (!confirm('Видалити цей запис?')) return;
+  try {
+    await api(`/api/records/${id}`, { method: 'DELETE' });
+    toast('Запис видалено');
+    loadCatalog(catalogPage);
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ── Artists ──────────────────────────────────────────────────
+
+let artistPage = 1;
+async function loadArtists(page = 1) {
+  artistPage = page;
+  const container = document.getElementById('artist-grid-container');
+
+  if (!document.getElementById('artist-filters').innerHTML) {
+    document.getElementById('artist-filters').innerHTML = `
+      <input class="form-input" style="width:200px" placeholder="Пошук виконавця..." id="af-search">
+      <select class="filter-select" id="af-style"><option value="">Всі стилі</option><option>Hip-Hop</option><option>Rock</option><option>Pop</option><option>R&B</option><option>Electronic</option><option>Jazz</option></select>
+      <select class="filter-select" id="af-sort">
+        <option value="name_asc">Назва: А-Я</option>
+        <option value="name_desc">Назва: Я-А</option>
+        <option value="albums_desc">За кількістю альбомів</option>
+        <option value="records_desc">За кількістю записів</option>
+      </select>
+      <button class="btn btn-primary btn-sm" onclick="loadArtists(1)">Застосувати</button>
+    `;
+  }
+
+  container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
+  try {
+    const search = document.getElementById('af-search')?.value || '';
+    const style = document.getElementById('af-style')?.value || '';
+    const sort = document.getElementById('af-sort')?.value || 'name_asc';
+    const params = new URLSearchParams({ page, limit: 24 });
+    if (search) params.set('search', search);
+    if (style) params.set('style', style);
+    params.set('sort', sort);
+
+    const data = await api(`/api/artists?${params}`);
+
+    container.innerHTML = `<div class="artist-grid">${data.data.map((a, i) => `
+      <div class="artist-card" onclick="navigate('#/artists/' + ${a.id})">
+        <div class="artist-avatar">${a.image_url ? `<img src="${a.image_url}" alt="${a.name}" onerror="this.parentElement.innerHTML='🎤'">` : '🎤'}</div>
+        <div class="artist-name">${a.name}</div>
+        <div class="artist-meta">${a.country || '—'} · ${a.style || '—'}</div>
+        <div style="margin-top:6px;font-size:10px;color:var(--muted)">${a.album_count} альб. · ${a.record_count} треків</div>
+      </div>`).join('')}</div>`;
+
+    // Pagination
+    let pagHtml = '';
+    if (data.totalPages > 1) {
+      pagHtml = '<div class="pagination" style="margin-top:16px">';
+      if (page > 1) pagHtml += `<button class="page-btn" onclick="loadArtists(${page-1})">‹</button>`;
+      for (let i = 1; i <= Math.min(data.totalPages, 7); i++) {
+        pagHtml += `<button class="page-btn ${i===page?'active':''}" onclick="loadArtists(${i})">${i}</button>`;
+      }
+      if (data.totalPages > 7) pagHtml += `<button class="page-btn">…</button>`;
+      if (page < data.totalPages) pagHtml += `<button class="page-btn" onclick="loadArtists(${page+1})">›</button>`;
+      pagHtml += '</div>';
+    }
+    document.getElementById('artist-pagination').innerHTML = pagHtml;
+  } catch (e) {
+    container.innerHTML = `<div class="empty-state">Помилка: ${e.message}</div>`;
+  }
+}
+
+async function loadArtistDetails(id) {
+  const container = document.getElementById('artist-details-content');
+  container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  try {
+    const a = await api(`/api/artists/${id}`);
+    const isMgr = currentRole === 'admin' || currentRole === 'manager';
+    const isAdmin = currentRole === 'admin';
+
+    // Group records by album
+    const albumMap = {};
+    (a.albums || []).forEach(al => albumMap[al.id] = { ...al, tracks: [] });
+    let singlesTracklist = [];
+    (a.records || []).forEach(r => {
+      if (r.album_id && albumMap[r.album_id]) albumMap[r.album_id].tracks.push(r);
+      else singlesTracklist.push(r);
+    });
+
+    let albumsHtml = Object.values(albumMap).map(al => `
+      <div class="card" style="margin-bottom:16px;">
+        <div class="card-title" style="display:flex;align-items:center;gap:10px;">
+          <div class="album-cover" style="width:50px;height:50px;">${al.image_url ? `<img src="${al.image_url}" alt="${al.title}">` : '💿'}</div>
+          <div>
+            <div>Альбом: ${al.title} (${al.release_year || '—'}) ${al.genres ? '· ' + al.genres : ''}</div>
+            <div style="font-size:10px;color:var(--muted);font-weight:400;margin-top:2px;">${al.tracks.length} треків</div>
+          </div>
+        </div>
+        <table class="tbl"><thead><tr><th>Назва</th><th>Тривалість</th><th>Жанр</th>
+        ${isMgr ? '<th style="width:90px"></th>' : ''}</tr></thead>
+        <tbody>${al.tracks.map(t => `<tr>
+          <td><div style="font-weight:500" class="record-link" onclick="viewRecord(${t.id})">${t.title}</div></td>
+          <td style="font-family:'Space Mono',monospace;font-size:11px">${fmtTime(t.length)}</td>
+          <td>${genreTags(t.genres)}</td>
+          ${isMgr ? `<td><button class="btn btn-ghost btn-sm" onclick="editRecord(${t.id})">✏</button> ${isAdmin ? `<button class="btn btn-danger btn-sm" onclick="deleteRecord(${t.id})">✕</button>` : ''}</td>` : ''}
+        </tr>`).join('')}</tbody></table>
+      </div>`).join('');
+
+    if (singlesTracklist.length > 0) {
+      albumsHtml += `<div class="card" style="margin-bottom:16px;"><div class="card-title">Сингли</div>
+        <table class="tbl"><thead><tr><th>Назва</th><th>Тривалість</th><th>Жанр</th></tr></thead>
+        <tbody>${singlesTracklist.map(t => `<tr>
+          <td><div style="font-weight:500" class="record-link" onclick="viewRecord(${t.id})">${t.title}</div></td>
+          <td style="font-family:'Space Mono',monospace;font-size:11px">${fmtTime(t.length)}</td>
+          <td>${genreTags(t.genres)}</td></tr>`).join('')}</tbody></table></div>`;
+    }
+
+    container.innerHTML = `
+      <div class="page-header" style="align-items:flex-end;">
+        <div style="display:flex;gap:16px;align-items:center;">
+          <div class="img-avatar-lg" style="width:80px;height:80px;font-size:32px;">${a.image_url ? `<img src="${a.image_url}" alt="${a.name}">` : '🎤'}</div>
+          <div>
+            <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;font-weight:600">Виконавець</div>
+            <div class="page-title" style="font-size:32px;margin-bottom:4px;">${a.name}</div>
+            <div style="font-size:12px;color:var(--muted)">${a.country || '—'} · ${a.style || '—'} · ${a.albums?.length || 0} альбомів · ${a.records?.length || 0} треків</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          ${isMgr ? `<button class="btn btn-primary btn-sm" onclick="document.getElementById('alb-artist-id').value=${a.id};openModal('addAlbum')">+ Додати альбом</button>` : ''}
+          <button class="btn btn-ghost btn-sm" onclick="showPage('artists')">⮌ Назад</button>
+        </div>
+      </div>
+      ${albumsHtml || '<div class="empty-state">Немає альбомів</div>'}`;
+  } catch (e) {
+    container.innerHTML = `<div class="empty-state">Помилка: ${e.message}</div>`;
+  }
+}
+
+async function saveArtist() {
+  try {
+    await api('/api/artists', { method: 'POST', body: {
+      name: document.getElementById('aa-name').value,
+      country: document.getElementById('aa-country').value,
+      style: document.getElementById('aa-style').value
+    }});
+    closeModal('addArtist');
+    toast('Виконавця додано');
+    loadArtists(artistPage);
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function saveAlbum() {
+  try {
+    const genreSelect = document.getElementById('alb-genre');
+    const genre_ids = Array.from(genreSelect.selectedOptions).map(o => parseInt(o.value));
+    await api('/api/albums', { method: 'POST', body: {
+      title: document.getElementById('alb-title').value,
+      release_year: parseInt(document.getElementById('alb-year').value) || null,
+      artist_id: parseInt(document.getElementById('alb-artist-id').value),
+      genre_ids
+    }});
+    closeModal('addAlbum');
+    toast('Альбом створено');
+    loadArtistDetails(parseInt(document.getElementById('alb-artist-id').value));
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ── Playlists ────────────────────────────────────────────────
+
+async function loadPlaylists() {
+  const container = document.getElementById('playlist-grid-container');
+  
+  if (!document.getElementById('playlist-filters').innerHTML) {
+    document.getElementById('playlist-filters').innerHTML = `
+      <select class="filter-select" id="pf-sort">
+        <option value="newest">Найновіші</option>
+        <option value="oldest">Найстаріші</option>
+        <option value="title_asc">Назва: А-Я</option>
+        <option value="title_desc">Назва: Я-А</option>
+        <option value="tracks_desc">За кількістю треків</option>
+      </select>
+      <button class="btn btn-primary btn-sm" onclick="loadPlaylists()">Застосувати</button>
+    `;
+  }
+  
+  container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  try {
+    const sort = document.getElementById('pf-sort')?.value || 'newest';
+    const data = await api(`/api/playlists?user_id=${currentUserId}&sort=${sort}`);
+    const icons = ['🎧','🌙','⚡','🇺🇦','🎸','🎵','🎹','🎤'];
+    container.innerHTML = `<div class="playlist-grid">
+      ${data.map((p, i) => `
+        <div class="playlist-card" onclick="navigate('#/playlists/' + ${p.id})">
+          <div class="pl-icon">${icons[i % icons.length]}</div>
+          <div class="pl-name">${p.title}</div>
+          <div class="pl-meta">${p.track_count} треків · ${fmtTime(p.total_duration)}</div>
+          <div style="margin-top:6px;font-size:10px;color:var(--muted)">${fmtDate(p.created_at)}</div>
+        </div>`).join('')}
+      <div class="playlist-card" style="border-style:dashed;display:flex;align-items:center;justify-content:center;flex-direction:column;color:var(--muted);gap:6px;cursor:pointer" onclick="openModal('addPlaylist')">
+        <div style="font-size:28px">+</div><div style="font-size:12px">Створити плейлист</div>
+      </div>
+    </div>`;
+  } catch (e) {
+    container.innerHTML = `<div class="empty-state">Помилка: ${e.message}</div>`;
+  }
+}
+
+async function loadPlaylistDetails(id) {
+  const container = document.getElementById('playlist-details-content');
+  container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  try {
+    const p = await api(`/api/playlists/${id}`);
+    const totalDur = (p.tracks || []).reduce((s, t) => s + (t.length || 0), 0);
+    container.innerHTML = `
+      <div class="page-header" style="align-items:flex-end;">
+        <div style="display:flex;gap:16px;align-items:center;">
+          <div style="width:80px;height:80px;border-radius:12px;background:linear-gradient(135deg,#3b82f6,var(--accent2));display:flex;align-items:center;justify-content:center;font-size:32px;">🎧</div>
+          <div>
+            <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;font-weight:600">Плейлист</div>
+            <div class="page-title" style="font-size:32px;margin-bottom:4px;">${p.title}</div>
+            <div style="font-size:12px;color:var(--muted)">${p.user_name} · ${p.tracks?.length || 0} треків · ${fmtTime(totalDur)}</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-danger btn-sm" onclick="deletePlaylist(${id})">🗑 Видалити</button>
+          <button class="btn btn-ghost btn-sm" onclick="showPage('playlists')">⮌ Назад</button>
+        </div>
+      </div>
+      <div class="card" style="padding:0"><table class="tbl">
+        <thead><tr><th style="width:40px">#</th><th>Назва</th><th>Виконавець</th><th>Тривалість</th><th style="text-align:right">Дії</th></tr></thead>
+        <tbody>${(p.tracks || []).map((t, i) => `<tr>
+          <td style="color:var(--muted);font-size:11px">${i + 1}</td>
+          <td><div style="font-weight:500" class="record-link" onclick="viewRecord(${t.id})">${t.title}</div></td>
+          <td style="color:var(--muted)">${t.artist_name}</td>
+          <td style="font-family:'Space Mono',monospace;font-size:11px">${fmtTime(t.length)}</td>
+          <td style="text-align:right"><button class="btn btn-ghost btn-sm" onclick="removeFromPlaylist(${id},${t.id})">🗑</button></td>
+        </tr>`).join('')}</tbody></table></div>`;
+  } catch (e) {
+    container.innerHTML = `<div class="empty-state">Помилка: ${e.message}</div>`;
+  }
+}
+
+async function savePlaylist() {
+  try {
+    await api('/api/playlists', { method: 'POST', body: {
+      title: document.getElementById('ap-title').value,
+      description: document.getElementById('ap-desc').value,
+      user_id: currentUserId
+    }});
+    closeModal('addPlaylist');
+    toast('Плейлист створено');
+    loadPlaylists();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function deletePlaylist(id) {
+  if (!confirm('Видалити цей плейлист?')) return;
+  try {
+    await api(`/api/playlists/${id}`, { method: 'DELETE' });
+    toast('Плейлист видалено');
+    showPage('playlists');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function removeFromPlaylist(plId, recId) {
+  try {
+    await api(`/api/playlists/${plId}/records/${recId}`, { method: 'DELETE' });
+    toast('Трек видалено з плейлиста');
+    loadPlaylistDetails(plId);
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function addToPlaylistModal(recordId) {
+  document.getElementById('atp-record-id').value = recordId;
+  try {
+    const playlists = await api(`/api/playlists?user_id=${currentUserId}`);
+    document.getElementById('atp-playlists').innerHTML = playlists.map(p =>
+      `<div style="padding:8px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''" onclick="addToPlaylist(${p.id},${recordId})">
+        <div style="font-weight:500">${p.title}</div>
+        <div style="font-size:10px;color:var(--muted)">${p.track_count} треків</div>
+      </div>`
+    ).join('');
+    closeModal('viewRecord');
+    openModal('addToPlaylist');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function addToPlaylist(plId, recId) {
+  try {
+    await api(`/api/playlists/${plId}/records`, { method: 'POST', body: { record_id: recId } });
+    closeModal('addToPlaylist');
+    toast('Трек додано до плейлиста');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ── Stats ────────────────────────────────────────────────────
+
+async function loadStats() {
+  const container = document.getElementById('stats-content');
+  container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  const days = parseInt(document.getElementById('stats-period').value);
+
+  try {
+    const [userStats, topRecords, platform] = await Promise.all([
+      api(`/api/stats/user/${currentUserId}?days=${days}`),
+      api(`/api/stats/top?days=${days}&limit=5`),
+      api(`/api/stats/platform?days=${days}`)
+    ]);
+
+    const totalHours = Math.round((userStats.total_seconds || 0) / 3600);
+    const topArtists = userStats.top_artists || [];
+    const topTracks = userStats.top_records || [];
+    const emojis = ['🎤','🎶','🎸','🎵','🎧'];
+
+    // Platform stats for admin/manager
+    const isAdmin = currentRole === 'admin' || currentRole === 'manager';
+    const maxByGenre = Math.max(...(platform.byGenre || []).map(g => parseInt(g.cnt)), 1);
+
+    container.innerHTML = `
+      <div class="stat-grid">
+        <div class="stat-card s-purple"><div class="stat-icon">♫</div><div class="stat-val">${userStats.total_listenings || 0}</div><div class="stat-lbl">Прослуховувань</div></div>
+        <div class="stat-card s-green"><div class="stat-icon">⏱</div><div class="stat-val">${totalHours} год</div><div class="stat-lbl">Загальний час</div></div>
+        <div class="stat-card s-blue"><div class="stat-icon">🎤</div><div class="stat-val">${topArtists.length}</div><div class="stat-lbl">Унікальних артистів</div></div>
+        <div class="stat-card s-yellow"><div class="stat-icon">★</div><div class="stat-val">${currentRole === 'listener' ? 'Premium' : 'Платформа'}</div><div class="stat-lbl">${currentRole === 'listener' ? 'Тип підписки' : platform.unique_users + ' слухачів'}</div></div>
+      </div>
+      <div class="two-col">
+        <div class="card">
+          <div class="card-title">Топ-5 ${isAdmin ? 'записів платформи' : 'виконавців'}</div>
+          ${isAdmin ?
+            topRecords.map((t, i) => `<div class="top-item">
+              <div class="top-rank ${i<2?'gold':''}">${i+1}</div>
+              <div class="top-thumb">${emojis[i%5]}</div>
+              <div class="top-info"><div class="t-name">${t.title}</div><div class="t-sub">${t.artist_name}${t.genres ? ' · '+t.genres : ''}</div></div>
+              <div class="top-count">${t.listen_count}</div>
+            </div>`).join('') :
+            topArtists.map((a, i) => `<div class="top-item">
+              <div class="top-rank ${i<2?'gold':''}">${i+1}</div>
+              <div class="top-thumb">${emojis[i%5]}</div>
+              <div class="top-info"><div class="t-name">${a.name}</div></div>
+              <div class="top-count">${a.listen_count}</div>
+            </div>`).join('')
+          }
+          ${(isAdmin ? topRecords : topArtists).length === 0 ? '<div class="empty-state">Немає даних</div>' : ''}
+        </div>
+        <div class="card">
+          <div class="card-title">Розподіл за жанрами</div>
+          <div class="bar-chart">
+            ${(platform.byGenre || []).map(g => `
+              <div class="bar-row"><div class="bar-label">${g.name}</div>
+              <div class="bar-track"><div class="bar-fill" style="width:${Math.round(parseInt(g.cnt)/maxByGenre*100)}%"></div></div>
+              <div class="bar-val">${g.cnt}</div></div>`).join('')}
+          </div>
+          ${isAdmin ? `<div class="section-sep"></div><div class="card-title" style="margin-bottom:8px">За типами</div>
+            <div class="bar-chart">${(platform.byType || []).map(t => `
+              <div class="bar-row"><div class="bar-label">${{song:'Пісні',podcast:'Подкасти',audiobook:'Книги'}[t.type]||t.type}</div>
+              <div class="bar-track"><div class="bar-fill" style="width:${Math.round(parseInt(t.cnt)/Math.max(...platform.byType.map(x=>parseInt(x.cnt)),1)*100)}%"></div></div>
+              <div class="bar-val">${t.cnt}</div></div>`).join('')}</div>` : ''}
+        </div>
+      </div>`;
+  } catch (e) {
+    container.innerHTML = `<div class="empty-state">Помилка: ${e.message}</div>`;
+  }
+}
+
+// ── Subscriptions ────────────────────────────────────────────
+
+async function loadSubscriptions() {
+  const container = document.getElementById('subscriptions-content');
+  container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  try {
+    const data = await api('/api/subscriptions');
+    const isAdmin = currentRole === 'admin';
+
+    container.innerHTML = `
+      <div class="sub-cards">
+        <div class="sub-card"><div class="sub-card-type">Free</div><div class="sub-card-price">0 грн</div>
+          <div class="sub-feature">Пісні та подкасти</div><div class="sub-feature">Реклама між треками</div>
+          <div class="sub-feature" style="color:var(--muted)">✗ Без преміум-контенту</div></div>
+        <div class="sub-card premium" ${currentRole==='listener'?'style="border-color:var(--accent)"':''}>
+          ${currentRole==='listener'?'<div style="position:absolute;top:12px;right:12px;font-size:10px;background:var(--accent);color:#fff;padding:2px 8px;border-radius:12px;font-weight:600">Активна</div>':''}
+          <div class="sub-card-type">Premium</div><div class="sub-card-price">300 грн<span style="font-size:12px;color:var(--muted)">/міс</span></div>
+          <div class="sub-feature">Весь контент без обмежень</div><div class="sub-feature">Завантаження для офлайн</div>
+          <div class="sub-feature">Аудіокниги та подкасти</div><div class="sub-feature">Статистика прослуховувань</div></div>
+      </div>
+      ${isAdmin ? `<div class="card"><div class="card-title">Всі підписки платформи</div>
+        <table class="tbl"><thead><tr><th>ID</th><th>Тип</th><th>Статус</th><th>Закінчується</th><th>Ціна</th><th>Користувачів</th></tr></thead>
+        <tbody>${data.map(s => `<tr>
+          <td style="font-family:'Space Mono',monospace;font-size:11px">#${s.id}</td>
+          <td><span class="badge ${s.subscription_type}">${s.subscription_type}</span></td>
+          <td><span class="badge ${s.status}">${s.status === 'active' ? 'Активна' : 'Неактивна'}</span></td>
+          <td>${s.valid_until ? new Date(s.valid_until).toLocaleDateString() : '—'}</td>
+          <td>${s.price} грн</td>
+          <td>${s.user_count}</td>
+        </tr>`).join('')}</tbody></table></div>` : ''}`;
+  } catch (e) {
+    container.innerHTML = `<div class="empty-state">Помилка: ${e.message}</div>`;
+  }
+}
+
+// ── Audit ────────────────────────────────────────────────────
+
+async function loadAudit(page = 1) {
+  const container = document.getElementById('audit-content');
+  container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  try {
+    const operation = document.getElementById('audit-operation').value;
+    const table_name = document.getElementById('audit-table').value;
+    const params = new URLSearchParams({ page, limit: 30 });
+    if (operation) params.set('operation', operation);
+    if (table_name) params.set('table_name', table_name);
+
+    const data = await api(`/api/audit?${params}`);
+    container.innerHTML = `<div class="card">${data.data.map(a => `
+      <div class="audit-row">
+        <span class="audit-type ${a.operation==='INSERT'?'ins':a.operation==='UPDATE'?'upd':'del'}">${a.operation}</span>
+        <div class="audit-info">
+          <div class="a-table">${a.table_name}</div>
+          <div class="a-detail">record_id=${a.record_id} · ${a.details || ''} ${a.user_name ? '· by '+a.user_name : '· by system'}</div>
+        </div>
+        <div class="audit-time">${fmtDateTime(a.created_at)}</div>
+      </div>`).join('')}
+      ${data.data.length === 0 ? '<div class="empty-state">Немає записів аудиту</div>' : ''}
+    </div>`;
+
+    // Pagination
+    let pagHtml = '';
+    if (data.totalPages > 1) {
+      pagHtml = '<div class="pagination">';
+      if (page > 1) pagHtml += `<button class="page-btn" onclick="loadAudit(${page-1})">‹</button>`;
+      for (let i = 1; i <= Math.min(data.totalPages, 5); i++) {
+        pagHtml += `<button class="page-btn ${i===page?'active':''}" onclick="loadAudit(${i})">${i}</button>`;
+      }
+      if (page < data.totalPages) pagHtml += `<button class="page-btn" onclick="loadAudit(${page+1})">›</button>`;
+      pagHtml += '</div>';
+    }
+    document.getElementById('audit-pagination').innerHTML = pagHtml;
+  } catch (e) {
+    container.innerHTML = `<div class="empty-state">Помилка: ${e.message}</div>`;
+  }
+}
+
+// ── Admin Panel ──────────────────────────────────────────────
+
+async function loadAdminPanel() {
+  // Populate user dropdown
+  const select = document.getElementById('admin-user-select');
+  try {
+    const users = await api('/api/users');
+    select.innerHTML = '<option value="">— Оберіть користувача —</option>' +
+      users.map(u => `<option value="${u.id}">${u.first_name} ${u.last_name} (${u.email})</option>`).join('');
+  } catch (e) {
+    select.innerHTML = '<option value="">Помилка завантаження</option>';
+  }
+
+  // Load users table
+  const container = document.getElementById('admin-users-table');
+  container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  try {
+    const users = await api('/api/users');
+    container.innerHTML = `<table class="tbl">
+      <thead><tr><th>Ім'я</th><th>Email</th><th>Роль</th><th>Статус</th></tr></thead>
+      <tbody>${users.map(u => `<tr>
+        <td>${u.first_name} ${u.last_name}</td>
+        <td style="color:var(--muted);font-size:11px">${u.email}</td>
+        <td><span class="badge ${u.role==='admin'?'admin-r':u.role==='content_manager'?'manager':'free'}">${u.role}</span></td>
+        <td><span class="badge ${u.is_deleted?'inactive':'active'}">${u.is_deleted?'Видалений':'Активний'}</span></td>
+      </tr>`).join('')}</tbody></table>`;
+  } catch (e) {
+    container.innerHTML = `<div class="empty-state">Помилка: ${e.message}</div>`;
+  }
+}
+
+async function adminSelectUser(userId) {
+  const detail = document.getElementById('admin-user-detail');
+  if (!userId) {
+    detail.style.display = 'none';
+    return;
+  }
+  try {
+    const u = await api(`/api/auth/user/${userId}`);
+    document.getElementById('admin-user-avatar').textContent = (u.first_name[0] + u.last_name[0]).toUpperCase();
+    document.getElementById('admin-user-name').textContent = u.first_name + ' ' + u.last_name;
+    document.getElementById('admin-user-email').textContent = u.email;
+    document.getElementById('admin-user-role').value = u.role_id;
+    detail.style.display = '';
+  } catch (e) {
+    toast('Помилка завантаження користувача: ' + e.message, 'error');
+  }
+}
+
+async function adminSaveUserRole() {
+  const userId = document.getElementById('admin-user-select').value;
+  if (!userId) { toast('Оберіть користувача', 'error'); return; }
+  try {
+    const u = await api(`/api/auth/user/${userId}`);
+    const newRoleId = parseInt(document.getElementById('admin-user-role').value);
+    await api(`/api/users/${userId}`, { method: 'PUT', body: {
+      first_name: u.first_name,
+      last_name: u.last_name,
+      email: u.email,
+      role_id: newRoleId,
+      is_deleted: u.is_deleted
+    }});
+    toast('Роль користувача оновлено');
+    // Refresh if we changed the current user's role
+    if (parseInt(userId) === currentUserId) {
+      const updated = await api(`/api/auth/user/${userId}`);
+      const foundUser = allUsers.find(x => x.id == userId);
+      if (foundUser) foundUser.role = updated.role;
+      switchUser(currentUserId);
+    }
+    loadAdminPanel();
+  } catch (e) {
+    toast('Помилка збереження: ' + e.message, 'error');
+  }
+}
+
+async function saveUser() {
+  try {
+    await api('/api/users', { method: 'POST', body: {
+      first_name: document.getElementById('au-fname').value,
+      last_name: document.getElementById('au-lname').value,
+      email: document.getElementById('au-email').value,
+      role_id: parseInt(document.getElementById('au-role').value)
+    }});
+    closeModal('addUser');
+    toast('Користувача створено');
+    loadAdminPanel();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function runImport() {
+  const btn = document.getElementById('import-btn');
+  const status = document.getElementById('import-status');
+  btn.disabled = true;
+  btn.textContent = '⏳ Імпорт...';
+  status.textContent = 'Запуск імпорту з MusicBrainz API...\nЦе може зайняти кілька хвилин.';
+  try {
+    const res = await api('/api/import/musicbrainz', { method: 'POST' });
+    status.textContent = res.output || 'Імпорт завершено';
+    toast(res.success ? 'Імпорт завершено' : 'Помилка імпорту', res.success ? 'success' : 'error');
+  } catch (e) {
+    status.textContent = 'Помилка: ' + e.message;
+    toast(e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '⤓ Запустити імпорт';
+  }
+}
+
+
+
+// ── Search ───────────────────────────────────────────────────
+
+function doGlobalSearch() {
+  const q = document.getElementById('global-search').value.trim();
+  if (!q) return;
+  navigate('#/catalog');
+  setTimeout(() => loadCatalog(1), 100);
+}
+
+// ── Modals ───────────────────────────────────────────────────
+
+function openModal(name) {
+  const m = document.getElementById('modal-' + name);
+  if (m) m.classList.add('open');
+
+  // Populate artist selects when opening add record modal
+  if (name === 'addRecord') {
+    api('/api/artists?limit=500').then(data => {
+      document.getElementById('ar-artist').innerHTML = data.data.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
+    });
+    api('/api/albums').then(data => {
+      document.getElementById('ar-album').innerHTML = '<option value="">— без альбому —</option>' +
+        data.map(a => `<option value="${a.id}">${a.title} (${a.artist_name})</option>`).join('');
+    });
+  }
+}
+
+function closeModal(name) {
+  const m = document.getElementById('modal-' + name);
+  if (m) m.classList.remove('open');
+}
+
+// Close modal on overlay click
+document.querySelectorAll('.modal-overlay').forEach(o => {
+  o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
+});
+
+// ── Start ────────────────────────────────────────────────────
+
+init();
+</script>
+</body>
+</html>
