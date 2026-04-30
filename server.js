@@ -155,7 +155,7 @@ app.get('/api/dashboard', async (req, res) => {
 
 app.get('/api/records', async (req, res) => {
   try {
-    const { page = 1, limit = 50, genre, search, type, sort = 'newest' } = req.query;
+    const { page = 1, limit = 50, genre, search, type, sort = 'title_asc' } = req.query;
     const offset = (parseInt(page) - 1) * parseInt(limit);
 
     let where = [];

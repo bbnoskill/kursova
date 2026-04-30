@@ -922,10 +922,10 @@ async function loadCatalog(page = 1) {
       <select class="filter-select" id="cf-genre"><option value="">Всі жанри</option>${genres.map(g => `<option value="${g.name}">${g.name}</option>`).join('')}</select>
       <select class="filter-select" id="cf-type"><option value="">Всі типи</option><option value="song">Пісня</option><option value="podcast">Подкаст</option><option value="audiobook">Аудіокнига</option></select>
       <select class="filter-select" id="cf-sort">
-        <option value="newest">Замовчуванням (Нові додані)</option>
-        <option value="oldest">Старі додані</option>
-        <option value="title_asc">Назва: А-Я</option>
+        <option value="title_asc" selected>Замовчуванням (Назва: А-Я)</option>
         <option value="title_desc">Назва: Я-А</option>
+        <option value="newest">Нові додані</option>
+        <option value="oldest">Старі додані</option>
         <option value="artist_asc">Виконавець: А-Я</option>
         <option value="duration_desc">Тривалість: від найдовших</option>
       </select>
